@@ -1,0 +1,122 @@
+{
+  "id": 1,
+  "slug": "elden-ring",
+  "name": "Elden Ring",
+  "storeUrl": "https://store.steampowered.com/app/1245620/Elden_Ring/",
+  "isFavorite": true,
+  "images": {
+    "cover": "https://cdn.akamai.steamstatic.com/steam/apps/1245620/library_600x900_2x.jpg",
+    "hero": "https://cdn.akamai.steamstatic.com/steam/apps/1245620/library_hero.jpg",
+    "screenshots": [
+      "https://cdn.akamai.steamstatic.com/steam/apps/1245620/ss_9b9d9727dc02e6e3362153549229e68c857732d5.1920x1080.jpg",
+      "https://cdn.akamai.steamstatic.com/steam/apps/1245620/ss_89d363d332a498b3374828340d0f40ceb846e9df.1920x1080.jpg",
+      "https://cdn.akamai.steamstatic.com/steam/apps/1245620/ss_27690a229875429c0d1591873739775f0f353665.1920x1080.jpg",
+      "https://cdn.akamai.steamstatic.com/steam/apps/1245620/ss_496a75df8a513cb3ee99b3524b09c52253000678.1920x1080.jpg"
+    ]
+  },
+  "meta": {
+    "genres": [
+      "Action RPG",
+      "Open World"
+    ],
+    "platforms": [
+      "PC",
+      "PlayStation",
+      "Xbox"
+    ],
+    "developer": "FromSoftware",
+    "publisher": "Bandai Namco Entertainment",
+    "releaseDate": "2022-02-25",
+    "description": "Levántate, Tiznado, y déjate guiar por la gracia para esgrimir el poder del Anillo de Elden y convertirte en un Señor de Elden en las Tierras Intermedias. Explora un vasto mundo lleno de emociones donde los campos abiertos y las inmensas mazmorras se conectan con fluidez, crea tu propio personaje con total libertad y sumérgete en un drama épico nacido de un mito."
+  },
+  "playerGrowth14d": [
+    { "day": "2025-11-15", "players": 180000 },
+    { "day": "2025-11-16", "players": 175000 },
+    { "day": "2025-11-17", "players": 190000 },
+    { "day": "2025-11-18", "players": 210000 },
+    { "day": "2025-11-19", "players": 205000 },
+    { "day": "2025-11-20", "players": 220000 },
+    { "day": "2025-11-21", "players": 230000 },
+    { "day": "2025-11-22", "players": 225000 },
+    { "day": "2025-11-23", "players": 235000 },
+    { "day": "2025-11-24", "players": 240000 },
+    { "day": "2025-11-25", "players": 250000 },
+    { "day": "2025-11-26", "players": 255000 },
+    { "day": "2025-11-27", "players": 262000 },
+    { "day": "2025-11-28", "players": 270000 }
+  ],
+  "kpiSeries": {
+    "topCountries": [
+      { "country": "US", "code": "US", "weight": 21 },
+      { "country": "GB", "code": "GB", "weight": 9 },
+      { "country": "DE", "code": "DE", "weight": 8 },
+      { "country": "JP", "code": "JP", "weight": 7 },
+      { "country": "BR", "code": "BR", "weight": 6 }
+    ],
+    "peakPlayers": 953000,
+    "score": 91,
+    "currentPlayers": 240000,
+    "players24hChangePercent": 7.5
+  },
+  "rankingMovement": {
+    "currentRank": 4,
+    "change": -1,
+    "history": [
+      { "day": "2025-11-21", "rank": 3 },
+      { "day": "2025-11-22", "rank": 3 },
+      { "day": "2025-11-23", "rank": 4 },
+      { "day": "2025-11-24", "rank": 4 },
+      { "day": "2025-11-25", "rank": 4 },
+      { "day": "2025-11-26", "rank": 5 },
+      { "day": "2025-11-27", "rank": 4 }
+    ]
+  },
+  "platformDistribution": [
+    { "platform": "PC", "percent": 54 },
+    { "platform": "PlayStation", "percent": 33 },
+    { "platform": "Xbox", "percent": 13 }
+  ],
+  "retention": {
+    "d1": 68,
+    "d2": 49,
+    "d3": 32
+  },
+  "userReviews": {
+    "total": 125000,
+    "positivePercent": 84,
+    "mixedPercent": 11,
+    "negativePercent": 5,
+    "starsDistribution": {
+      "5": 72,
+      "4": 18,
+      "3": 6,
+      "2": 3,
+      "1": 1
+    }
+  },
+  "criticReviews": {
+    "total": 120,
+    "positivePercent": 88,
+    "mixedPercent": 9,
+    "negativePercent": 3
+  },
+  "communitySentiment": {
+    "positivePercent": 86,
+    "mixedPercent": 10,
+    "negativePercent": 4
+  },
+  "peakHours": [
+    { "hour": "00:00", "players": 80000 },
+    { "hour": "02:00", "players": 72000 },
+    { "hour": "04:00", "players": 65000 },
+    { "hour": "06:00", "players": 60000 },
+    { "hour": "08:00", "players": 70000 },
+    { "hour": "10:00", "players": 90000 },
+    { "hour": "12:00", "players": 110000 },
+    { "hour": "14:00", "players": 130000 },
+    { "hour": "16:00", "players": 150000 },
+    { "hour": "18:00", "players": 170000 },
+    { "hour": "20:00", "players": 190000 },
+    { "hour": "22:00", "players": 175000 }
+  ]
+}

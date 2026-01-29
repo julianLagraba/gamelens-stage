@@ -1,0 +1,32 @@
+{
+  "userId": 101,
+  "favorites": [
+    {
+      "id": 1,
+      "slug": "elden-ring",
+      "name": "Elden Ring",
+      "coverUrl": "https://placehold.co/600x900/1a1a1a/ffffff?text=Elden+Ring",
+      "score": 96,
+      "currentPlayers": 240000,
+      "isFavorite": true
+    },
+    {
+      "id": 4,
+      "slug": "fortnite",
+      "name": "Fortnite",
+      "coverUrl": "https://placehold.co/600x900/2a2a2a/ffffff?text=Fortnite",
+      "score": 81,
+      "currentPlayers": 310000,
+      "isFavorite": true
+    },
+    {
+      "id": 6,
+      "slug": "minecraft",
+      "name": "Minecraft",
+      "coverUrl": "https://placehold.co/600x900/3a3a3a/ffffff?text=Minecraft",
+      "score": 93,
+      "currentPlayers": 280000,
+      "isFavorite": true
+    }
+  ]
+}

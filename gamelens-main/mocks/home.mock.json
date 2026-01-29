@@ -1,0 +1,453 @@
+{
+  "user": {
+    "id": 101,
+    "name": "Valentín",
+    "avatarUrl": "/images/avatar-default.png",
+    "favoritePlatform": "PC"
+  },
+  "games": [
+    {
+      "id": 1,
+      "slug": "elden-ring",
+      "name": "Elden Ring",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/library_600x900.jpg",
+      "score": 96,
+      "isFavorite": true,
+      "genres": [
+        "RPG",
+        "Acción",
+        "Mundo Abierto"
+      ]
+    },
+    {
+      "id": 2,
+      "slug": "cyberpunk-2077",
+      "name": "Cyberpunk 2077",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/library_600x900.jpg",
+      "score": 86,
+      "isFavorite": false,
+      "genres": [
+        "RPG",
+        "FPS",
+        "Mundo Abierto"
+      ]
+    },
+    {
+      "id": 3,
+      "slug": "destiny-2",
+      "name": "Destiny 2",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1085660/library_600x900.jpg",
+      "score": 83,
+      "isFavorite": false,
+      "genres": [
+        "FPS",
+        "Shooter",
+        "Acción"
+      ]
+    },
+    {
+      "id": 4,
+      "slug": "fortnite",
+      "name": "Fortnite",
+      "coverUrl": "https://static-cdn.jtvnw.net/ttv-boxart/33214-600x900.jpg",
+      "score": 81,
+      "isFavorite": true,
+      "genres": [
+        "Shooter",
+        "Acción",
+        "Mundo Abierto"
+      ]
+    },
+    {
+      "id": 5,
+      "slug": "league-of-legends",
+      "name": "League of Legends",
+      "coverUrl": "https://static-cdn.jtvnw.net/ttv-boxart/21779-600x900.jpg",
+      "score": 89,
+      "isFavorite": false,
+      "genres": [
+        "Estrategia",
+        "Acción"
+      ]
+    },
+    {
+      "id": 6,
+      "slug": "hades-ii",
+      "name": "Hades II",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1145350/library_600x900.jpg",
+      "score": 94,
+      "isFavorite": true,
+      "genres": [
+        "Indie",
+        "Acción",
+        "RPG"
+      ]
+    },
+    {
+      "id": 7,
+      "slug": "stardew-valley",
+      "name": "Stardew Valley",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/413150/library_600x900.jpg",
+      "score": 97,
+      "isFavorite": true,
+      "genres": [
+        "Indie",
+        "Estrategia",
+        "RPG"
+      ]
+    },
+    {
+      "id": 8,
+      "slug": "valorant",
+      "name": "Valorant",
+      "coverUrl": "https://static-cdn.jtvnw.net/ttv-boxart/516575-600x900.jpg",
+      "score": 85,
+      "isFavorite": false,
+      "genres": [
+        "FPS",
+        "Shooter",
+        "Estrategia"
+      ]
+    },
+    {
+      "id": 9,
+      "slug": "baldurs-gate-3",
+      "name": "Baldur's Gate 3",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/library_600x900.jpg",
+      "score": 98,
+      "isFavorite": true,
+      "genres": [
+        "RPG",
+        "Estrategia",
+        "Mundo Abierto"
+      ]
+    },
+    {
+      "id": 10,
+      "slug": "hollow-knight",
+      "name": "Hollow Knight",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/367520/library_600x900.jpg",
+      "score": 95,
+      "isFavorite": false,
+      "genres": [
+        "Indie",
+        "Acción"
+      ]
+    },
+    {
+      "id": 11,
+      "slug": "civilization-vi",
+      "name": "Civilization VI",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/289070/library_600x900.jpg",
+      "score": 88,
+      "isFavorite": false,
+      "genres": [
+        "Estrategia"
+      ]
+    },
+    {
+      "id": 12,
+      "slug": "apex-legends",
+      "name": "Apex Legends",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/library_600x900.jpg",
+      "score": 84,
+      "isFavorite": false,
+      "genres": [
+        "Shooter",
+        "FPS",
+        "Acción"
+      ]
+    },
+    {
+      "id": 13,
+      "slug": "the-witcher-3",
+      "name": "The Witcher 3",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/292030/library_600x900.jpg",
+      "score": 93,
+      "isFavorite": true,
+      "genres": [
+        "RPG",
+        "Mundo Abierto",
+        "Acción"
+      ]
+    },
+    {
+      "id": 14,
+      "slug": "red-dead-redemption-2",
+      "name": "Red Dead Redemption 2",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1174180/library_600x900.jpg",
+      "score": 97,
+      "isFavorite": false,
+      "genres": [
+        "Acción",
+        "Mundo Abierto",
+        "Shooter"
+      ]
+    },
+    {
+      "id": 15,
+      "slug": "overwatch-2",
+      "name": "Overwatch 2",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2357570/library_600x900.jpg",
+      "score": 79,
+      "isFavorite": false,
+      "genres": [
+        "Shooter",
+        "FPS",
+        "Acción"
+      ]
+    },
+    {
+      "id": 16,
+      "slug": "among-us",
+      "name": "Among Us",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/945360/library_600x900.jpg",
+      "score": 82,
+      "isFavorite": false,
+      "genres": [
+        "Indie",
+        "Estrategia"
+      ]
+    },
+    {
+      "id": 17,
+      "slug": "god-of-war-ragnarok",
+      "name": "God of War Ragnarok",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1593500/library_600x900.jpg",
+      "score": 94,
+      "isFavorite": true,
+      "genres": [
+        "Acción",
+        "RPG"
+      ]
+    },
+    {
+      "id": 18,
+      "slug": "cod-warzone",
+      "name": "Call of Duty: Warzone",
+      "coverUrl": "https://static-cdn.jtvnw.net/ttv-boxart/512710-600x900.jpg",
+      "score": 80,
+      "isFavorite": false,
+      "genres": [
+        "Shooter",
+        "FPS"
+      ]
+    },
+    {
+      "id": 19,
+      "slug": "celeste",
+      "name": "Celeste",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/504230/library_600x900.jpg",
+      "score": 92,
+      "isFavorite": false,
+      "genres": [
+        "Indie"
+      ]
+    },
+    {
+      "id": 20,
+      "slug": "terraria",
+      "name": "Terraria",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/105600/library_600x900.jpg",
+      "score": 88,
+      "isFavorite": true,
+      "genres": [
+        "Indie",
+        "Mundo Abierto"
+      ]
+    },
+    {
+      "id": 21,
+      "slug": "star-wars-jedi-survivor",
+      "name": "Star Wars Jedi: Survivor",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1774580/library_600x900.jpg",
+      "score": 85,
+      "isFavorite": false,
+      "genres": [
+        "Acción",
+        "RPG"
+      ]
+    },
+    {
+      "id": 22,
+      "slug": "diablo-iv",
+      "name": "Diablo IV",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2344520/library_600x900.jpg",
+      "score": 87,
+      "isFavorite": false,
+      "genres": [
+        "RPG",
+        "Acción"
+      ]
+    },
+    {
+      "id": 23,
+      "slug": "xcom-2",
+      "name": "XCOM 2",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/268500/library_600x900.jpg",
+      "score": 91,
+      "isFavorite": false,
+      "genres": [
+        "Estrategia"
+      ]
+    },
+    {
+      "id": 24,
+      "slug": "age-of-empires-iv",
+      "name": "Age of Empires IV",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1466860/library_600x900.jpg",
+      "score": 86,
+      "isFavorite": false,
+      "genres": [
+        "Estrategia"
+      ]
+    },
+    {
+      "id": 25,
+      "slug": "gta-v",
+      "name": "Grand Theft Auto V",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/library_600x900.jpg",
+      "score": 96,
+      "isFavorite": true,
+      "genres": [
+        "Mundo Abierto",
+        "Acción",
+        "Shooter"
+      ]
+    },
+    {
+      "id": 26,
+      "slug": "cs2",
+      "name": "Counter-Strike 2",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/library_600x900.jpg",
+      "score": 83,
+      "isFavorite": false,
+      "genres": [
+        "FPS",
+        "Shooter"
+      ]
+    },
+    {
+      "id": 27,
+      "slug": "palworld",
+      "name": "Palworld",
+      "coverUrl": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1623730/library_600x900.jpg",
+      "score": 80,
+      "isFavorite": false,
+      "genres": [
+        "Indie",
+        "Mundo Abierto",
+        "RPG"
+      ]
+    }
+  ],
+  "featuredGame": {
+    "id": 1,
+    "slug": "elden-ring",
+    "name": "Elden Ring",
+    "coverUrl": "https://placehold.co/1920x1080/1a1a1a/1a1a1a?text=%20",
+    "score": 96,
+    "reviewCount": 45000,
+    "genres": [
+      "RPG",
+      "Acción",
+      "Mundo Abierto"
+    ],
+    "rating": {
+      "starsAverage": 4.8,
+      "numeric": 9.6,
+      "totalReviews": 125000,
+      "starsDistribution": {
+        "5": 85,
+        "4": 10,
+        "3": 3,
+        "2": 1,
+        "1": 1
+      }
+    },
+    "players": {
+      "activity24h": 240000,
+      "peakAllTime": 953000
+    },
+    "activityByWeekday": [
+      {
+        "weekday": "Mon",
+        "avgPlayers": 120000
+      },
+      {
+        "weekday": "Tue",
+        "avgPlayers": 115000
+      },
+      {
+        "weekday": "Wed",
+        "avgPlayers": 130000
+      },
+      {
+        "weekday": "Thu",
+        "avgPlayers": 145000
+      },
+      {
+        "weekday": "Fri",
+        "avgPlayers": 180000
+      },
+      {
+        "weekday": "Sat",
+        "avgPlayers": 210000
+      },
+      {
+        "weekday": "Sun",
+        "avgPlayers": 195000
+      }
+    ],
+    "activity24hTimeline": [
+      {
+        "hour": "00:00",
+        "players": 80000
+      },
+      {
+        "hour": "02:00",
+        "players": 72000
+      },
+      {
+        "hour": "04:00",
+        "players": 65000
+      },
+      {
+        "hour": "06:00",
+        "players": 60000
+      },
+      {
+        "hour": "08:00",
+        "players": 70000
+      },
+      {
+        "hour": "10:00",
+        "players": 90000
+      },
+      {
+        "hour": "12:00",
+        "players": 110000
+      },
+      {
+        "hour": "14:00",
+        "players": 130000
+      },
+      {
+        "hour": "16:00",
+        "players": 150000
+      },
+      {
+        "hour": "18:00",
+        "players": 170000
+      },
+      {
+        "hour": "20:00",
+        "players": 190000
+      },
+      {
+        "hour": "22:00",
+        "players": 175000
+      }
+    ]
+  }
+}
