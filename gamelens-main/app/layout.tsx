@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import { AuthProvider } from './context/AuthContext';
-import { FavoritesProvider } from './context/FavoritesContext';
-import { CollectionProvider } from './context/CollectionContext';
-import { LanguageProvider } from "./context/LanguageContext";
-import { AchievementProvider } from './context/AchievementContext';
 import "./globals.css";
+import { Providers } from "./providers";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
@@ -37,17 +33,9 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased bg-[#131119] text-white selection:bg-pink-500/30 min-h-screen`}
       >
-        <LanguageProvider>
-          <AuthProvider>
-            <FavoritesProvider>
-              <CollectionProvider>
-               <AchievementProvider>
-                 {children}
-                </AchievementProvider>
-              </CollectionProvider>
-            </FavoritesProvider>
-          </AuthProvider>
-        </LanguageProvider>
+        <Providers>
+            {children}
+        </Providers>
       </body>
     </html>
   );

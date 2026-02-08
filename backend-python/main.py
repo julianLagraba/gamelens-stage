@@ -331,24 +331,37 @@ async def get_home_data():
 
 @app.get("/api/catalog")
 async def get_game_catalog(page: int = 1, limit: int = 24):
-    offset = (page - 1) * limit
+    real_limit = 500 if limit > 500 else limit
+    
+    offset = (page - 1) * limit 
+    if limit > 50:
+        offset = 0
+
     query = f"""
     fields name, slug, cover.url, total_rating, genres.name, first_release_date, external_games.category, external_games.uid;
     where total_rating > 70 & total_rating_count > 20 & cover != null & themes != (42);
     sort total_rating_count desc;
-    limit {limit};
+    limit {real_limit};
     offset {offset};
     """
+    
     data = await igdb_request("games", query)
+    
     results = []
     if not data: return []
+    
     for g in data:
         hero_url, cover_url, _, _ = get_smart_images(g)
+        
         results.append({
-            "id": g["id"], "slug": g["slug"], "name": g["name"], "coverUrl": cover_url,
+            "id": g["id"], 
+            "slug": g["slug"], 
+            "name": g["name"], 
+            "coverUrl": cover_url,
             "score": int(g.get("total_rating", 0)) if "total_rating" in g else 0,
             "genres": [gen["name"] for gen in g.get("genres", [])][:2]
         })
+        
     return results
 
 @app.get("/api/search")
@@ -630,3 +643,76 @@ def get_chat_history(friend_id: int, current_user_id: int = Query(...), db: Sess
     ).order_by(models.Message.timestamp.asc()).all()
     
     return messages
+
+# --- BUSCADOR DE USUARIOS ---
+@app.get("/api/users/search/query")
+def search_users(q: str = Query(..., min_length=2), current_user_id: int = Query(...), db: Session = Depends(get_db)):
+    users = db.query(models.User).filter(
+        models.User.username.ilike(f"%{q}%"), 
+        models.User.id != current_user_id
+    ).limit(5).all()
+    
+    results = []
+    for u in users:
+        results.append({
+            "id": u.id,
+            "username": u.username,
+            "avatar_url": u.avatar_url,
+            "level": u.level
+        })
+    return results
+
+# --- ELIMINAR AMIGO ---
+@app.delete("/api/friends/{user_id}/{friend_id}")
+def remove_friend(user_id: int, friend_id: int, db: Session = Depends(get_db)):
+    # Busca la relación en ambas direcciones (Yo -> Él o Él -> Yo)
+    relation = db.query(models.FriendRequest).filter(
+        ((models.FriendRequest.sender_id == user_id) & (models.FriendRequest.receiver_id == friend_id)) |
+        ((models.FriendRequest.sender_id == friend_id) & (models.FriendRequest.receiver_id == user_id))
+    ).first()
+    
+    if relation:
+        db.delete(relation) # Borra la relación de la tabla
+        db.commit()
+        return {"message": "Friend removed"}
+    
+    raise HTTPException(status_code=404, detail="Relación no encontrada")
+
+# --- NOTIFICACIONES ---
+
+@app.get("/api/users/{user_id}/notifications")
+def get_notifications(user_id: int, db: Session = Depends(get_db)):
+    pending_requests = db.query(models.FriendRequest).filter(
+        models.FriendRequest.receiver_id == user_id,
+        models.FriendRequest.status == "pending"
+    ).count()
+    
+    unread_messages_query = db.query(models.Message.sender_id).filter(
+        models.Message.receiver_id == user_id,
+        models.Message.is_read == False
+    ).distinct().all()
+ 
+    unread_senders = [r[0] for r in unread_messages_query]
+    
+    return {
+        "requests": pending_requests,
+        "messages": len(unread_senders), 
+        "total": pending_requests + len(unread_senders),
+        "unread_senders": unread_senders 
+    }
+
+@app.put("/api/chat/read/{sender_id}")
+def mark_messages_read(sender_id: int, current_user_id: int = Query(...), db: Session = Depends(get_db)):
+    # Buscar mensajes que me envió 'sender_id' y que no he leído
+    messages = db.query(models.Message).filter(
+        models.Message.sender_id == sender_id,
+        models.Message.receiver_id == current_user_id,
+        models.Message.is_read == False
+    ).all()
+    
+    # Marcarlos como leídos
+    for msg in messages:
+        msg.is_read = True
+    
+    db.commit()
+    return {"message": "Marked as read"}

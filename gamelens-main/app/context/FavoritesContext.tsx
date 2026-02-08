@@ -2,14 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Definimos la forma que tu página espera (según tu código)
+// Definimos la forma que tu página espera
 interface Game {
   id: number;
   name: string;
   slug: string;
   coverUrl: string;
-  score?: number;     // Opcional, porque la DB simple a veces no lo tiene
-  genres?: string[];  // Opcional, para los filtros
+  score?: number;     
+  genres?: string[];  
 }
 
 interface FavoritesContextType {
@@ -24,34 +24,49 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<Game[]>([]);
 
-  // 1. CARGAR FAVORITOS AL INICIAR
+  // 1. CARGAR FAVORITOS + ENRIQUECER DATOS
   const loadFavorites = async () => {
     const session = localStorage.getItem('user_session');
     if (!session) return;
 
     try {
       const user = JSON.parse(session);
-      // Pedimos los datos a Python
-      const res = await fetch(`http://127.0.0.1:8001/api/users/${user.id}/favorites`);
       
-      if (res.ok) {
-        const data = await res.json();
+      // A. Pedimos los Favoritos Simples (ID, Nombre, Foto)
+      const resFavs = await fetch(`http://127.0.0.1:8001/api/users/${user.id}/favorites`);
+      
+      // B. Pedimos el Catálogo Completo (Para sacar Score y Géneros)
+      // Nota: Si el catálogo es muy grande, esto debería optimizarse en backend, pero para <1000 juegos va perfecto.
+      const resCatalog = await fetch(`http://127.0.0.1:8001/api/catalog?limit=1000&page=1`);
+
+      if (resFavs.ok) {
+        const favsData = await resFavs.json();
+        let catalogData: any[] = [];
         
-        // ADAPTADOR: Convertimos los datos de Python (snake_case) a lo que tu página usa (camelCase)
-        const adaptedGames: Game[] = data.map((item: any) => ({
-          id: item.game_id,
-          name: item.game_name,
-          slug: item.game_slug,
-          coverUrl: item.cover_url, // Aquí arreglamos el problema de la imagen
-          // Como la tabla de favoritos simple no guarda score/género, ponemos defaults para que no rompa los filtros
-          score: 0, 
-          genres: ['All'] 
-        }));
+        if (resCatalog.ok) {
+            catalogData = await resCatalog.json();
+        }
         
-        setFavorites(adaptedGames);
+        // C. CRUCE DE DATOS (JOIN)
+        const enrichedFavorites: Game[] = favsData.map((favItem: any) => {
+            // Buscamos el juego completo en el catálogo usando el ID
+            const fullGameInfo = catalogData.find((g: any) => g.id === favItem.game_id);
+
+            return {
+                id: favItem.game_id,
+                name: favItem.game_name,
+                slug: favItem.game_slug,
+                coverUrl: favItem.cover_url,
+                // Si encontramos info extra en el catálogo, la usamos. Si no, default.
+                score: fullGameInfo ? fullGameInfo.score : 0, 
+                genres: fullGameInfo ? fullGameInfo.genres : ['All'] 
+            };
+        });
         
-        // Guardamos IDs en localStorage para acceso rápido en otros componentes
-        const ids = adaptedGames.map(g => g.id);
+        setFavorites(enrichedFavorites);
+        
+        // Guardamos IDs en localStorage para acceso rápido visual
+        const ids = enrichedFavorites.map(g => g.id);
         localStorage.setItem('user_favorites_ids', JSON.stringify(ids));
       }
     } catch (error) {
@@ -61,19 +76,18 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadFavorites();
-    // Escuchar evento por si otro componente actualiza algo
     window.addEventListener('favorites_updated', loadFavorites);
     return () => window.removeEventListener('favorites_updated', loadFavorites);
   }, []);
 
-  // 2. FUNCIÓN AGREGAR (Para usar desde Detalle o Cards)
+  // 2. AGREGAR FAVORITO
   const addFavorite = async (game: Game) => {
     const session = localStorage.getItem('user_session');
     if (!session) return alert("Inicia sesión primero");
     const user = JSON.parse(session);
 
     try {
-      // Optimistic UI: Lo agregamos visualmente antes de que el server responda
+      // Optimistic UI: Agregamos con todos los datos que nos pasen (incluido score/genres)
       setFavorites(prev => [...prev, game]); 
 
       await fetch(`http://127.0.0.1:8001/api/favorites?user_id=${user.id}`, {
@@ -86,39 +100,36 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
           cover_url: game.coverUrl
         })
       });
-      // Actualizamos la lista real para asegurar IDs
-      loadFavorites();
+      // Recargamos en segundo plano para asegurar consistencia
+      loadFavorites(); 
     } catch (error) {
       console.error("Error al agregar:", error);
-      loadFavorites(); // Revertimos si falló
+      loadFavorites(); 
     }
   };
 
-  // 3. FUNCIÓN ELIMINAR (La que usa tu botón de basura)
+  // 3. ELIMINAR FAVORITO
   const removeFavorite = async (id: number) => {
     const session = localStorage.getItem('user_session');
     if (!session) return;
     const user = JSON.parse(session);
 
     try {
-      // Optimistic UI: Lo sacamos visualmente ya
       setFavorites(prev => prev.filter(g => g.id !== id));
 
       await fetch(`http://127.0.0.1:8001/api/favorites/${user.id}/${id}`, {
         method: 'DELETE'
       });
       
-      // Actualizamos localStorage de IDs
       const currentIds = JSON.parse(localStorage.getItem('user_favorites_ids') || '[]');
       const newIds = currentIds.filter((fid: number) => fid !== id);
       localStorage.setItem('user_favorites_ids', JSON.stringify(newIds));
       
-      // Avisamos al resto de la app
       window.dispatchEvent(new Event("favorites_updated"));
 
     } catch (error) {
       console.error("Error al eliminar:", error);
-      loadFavorites(); // Revertimos
+      loadFavorites(); 
     }
   };
 
@@ -131,7 +142,6 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Hook personalizado para usarlo fácil
 export const useFavorites = () => {
   const context = useContext(FavoritesContext);
   if (!context) {

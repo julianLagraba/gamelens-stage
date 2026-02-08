@@ -5,11 +5,10 @@ import { FeaturedGame } from '@/types';
 import { Activity, ArrowRight, Users, Star, Trophy, LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-// Importamos el hook de idioma
 import { useLanguage } from '../app/context/LanguageContext';
 
 interface HeroBannerProps {
-  game: FeaturedGame;
+  game?: FeaturedGame; // Lo hice opcional por si acaso
 }
 
 interface Slide {
@@ -35,10 +34,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   
-  // 1. OBTENEMOS EL IDIOMA ACTUAL
   const { language } = useLanguage();
 
-  // 2. DICCIONARIO DE TRADUCCIONES PARA LOS SLIDES
   const translations = {
     en: {
       intro: {
@@ -94,11 +91,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
     }
   };
 
-  // 3. SELECCIONAMOS EL TEXTO SEGÚN EL IDIOMA
   const t = translations[language.toLowerCase() as 'en' | 'es'];
 
-  // 4. CONSTRUIMOS EL ARRAY DE SLIDES CON LOS TEXTOS DINÁMICOS
-  // Mantenemos los colores, iconos e IDs fijos, solo inyectamos el texto 't'
+  // --- CONFIGURACIÓN DE SLIDES ---
   const slides: Slide[] = [
     {
       id: 'intro',
@@ -119,7 +114,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
       description: t.community.desc,
       image: '/Logo_Game.svg',
       bgClass: 'bg-gradient-to-br from-[#2DD4E0]/80 via-[#131119] to-[#00FF62]/80',
-      cta: { text: t.community.cta, link: '/community', icon: Users },
+      // 🔥 CAMBIO AQUÍ: Puse el link real de Discord (reemplaza TU_LINK con el tuyo)
+      cta: { text: t.community.cta, link: 'https://discord.gg/qc6Rm8aG', icon: Users },
       secondary: null
     },
     {
@@ -163,6 +159,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
       
       {slides.map((slide, index) => {
         const isActive = index === currentSlide;
+        // Detectamos si es un link externo (empieza con http)
+        const isExternal = slide.cta.link.startsWith('http');
         
         return (
           <div 
@@ -204,36 +202,35 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
             {/* --- CONTENIDO --- */}
             <div className="absolute inset-0 flex flex-col justify-center items-start p-8 md:p-12 w-full md:w-2/3 lg:w-1/2 z-20">
               
-              {/* Badge */}
               <div className={`transition-all duration-700 delay-100 transform ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                 <span className="px-3 py-1 bg-white/10 backdrop-blur-md text-white text-xs font-bold rounded-lg border border-white/10 uppercase tracking-wider mb-6 inline-block shadow-lg font-sans group-hover:bg-white/20 transition-colors">
                   {slide.badge}
                 </span>
               </div>
 
-              {/* Título */}
               <div className={`transition-all duration-700 delay-200 transform ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 leading-tight drop-shadow-xl min-h-[3.5rem] flex items-end font-display text-left whitespace-nowrap">
                   {slide.title}
                 </h2>
               </div>
 
-              {/* Descripción */}
               <div className={`transition-all duration-700 delay-300 transform ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                 <p className="text-gray-300 text-sm md:text-base mb-10 font-sans group-hover:text-gray-200 transition-colors text-left max-w-xl">
                   {slide.description}
                 </p>
               </div>
 
-              {/* Botones CTA */}
               <div className={`flex items-center gap-4 transition-all duration-700 delay-500 transform ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                {/* 🔥 CAMBIO AQUÍ: Link mejorado para externos */}
                 <Link 
                   href={slide.cta.link} 
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
                   className="group/btn flex items-center gap-2 px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-blue-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95 font-sans"
                 >
                   <slide.cta.icon size={20} fill={slide.theme === 'game' ? "currentColor" : "none"} />
                   <span>{slide.cta.text}</span>
-                  {slide.theme === 'brand' && <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />}
+                  {slide.theme === 'brand' && !isExternal && <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />}
                 </Link>
 
                 {slide.secondary && (
@@ -248,7 +245,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
         );
       })}
 
-      {/* Indicadores (Dots) */}
+      {/* Indicadores */}
       <div className="absolute bottom-6 right-8 flex gap-2 z-30">
         {slides.map((_, idx) => (
           <button
@@ -263,4 +260,4 @@ export const HeroBanner: React.FC<HeroBannerProps> = () => {
       </div>
     </div>
   );
-};
+}

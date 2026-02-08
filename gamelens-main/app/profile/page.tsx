@@ -15,6 +15,9 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { useFavorites } from '@/app/context/FavoritesContext';
 import { useCollection } from '@/app/context/CollectionContext';
 import { ChatWindow } from '@/components/ChatWindow';
+// IMPORTAMOS LOS COMPONENTES NUEVOS
+import { FriendsWidget } from '@/components/FriendsWidget';
+import { FriendsModal } from '@/components/FriendsModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +35,6 @@ const PALETTE = {
   GRIS: '#9CA3AF'
 };
 
-// Mapa de iconos para traducir String de DB a Componente React
 const ICON_MAP: any = {
     "Crown": Crown, "Zap": Zap, "Swords": Swords, "Trophy": Trophy,
     "Medal": Medal, "Target": Target, "Flame": Flame, "Shield": Shield, "Settings": Settings
@@ -76,7 +78,6 @@ const AVATAR_OPTIONS = [
   { id: 'lor2', name: 'Mage', url: 'https://api.dicebear.com/7.x/lorelei/svg?seed=John' },
 ];
 
-// Datos Mock por si falla el backend
 const allAchievements = [
   { id: 1, title: "GameLens Initiate", game: "GameLens", icon: Shield, color: "#CD7F32", rarityKey: "Common", desc_en: "Create your account.", desc_es: "Crea tu cuenta." },
   { id: 2, title: "Library Builder", game: "GameLens", icon: Trophy, color: "#50a2ff", rarityKey: "Rare", desc_en: "Add 5 games.", desc_es: "Agrega 5 juegos." }
@@ -103,7 +104,6 @@ const initialUserProfile = {
   requests: []     
 };
 
-
 export default function ProfilePage() {
   const router = useRouter(); 
   const { favorites } = useFavorites(); 
@@ -127,15 +127,6 @@ export default function ProfilePage() {
         modalAch: { title: 'Unlocked Achievements', total: 'Total', close: 'Close' },
         modalAct: { title: 'Activity History', sub: 'All tracked games', close: 'Close', playing: 'Playing now', played: 'Played', online: 'Online', offline: 'Offline' },
         modalFav: { title: 'Favorite Games', sub: 'Your personal collection', close: 'Close' },
-        modalFriends: { 
-            title: 'Friends List', 
-            total: 'friends total', 
-            search: 'Search friends or add by ID...', 
-            close: 'Close', 
-            viewAll: 'View all friends', 
-            notFound: 'No friends found.',
-            actions: { view: 'View Profile', mute: 'Mute Notifications', remove: 'Remove Friend', report: 'Report / Block' }
-        },
         rarity: { Legendary: 'Legendary', Epic: 'Epic', UltraRare: 'Ultra Rare', Rare: 'Rare', Common: 'Common' }
     },
     es: {
@@ -154,15 +145,6 @@ export default function ProfilePage() {
         modalAch: { title: 'Logros Desbloqueados', total: 'Total', close: 'Cerrar' },
         modalAct: { title: 'Historial de Actividad', sub: 'Últimos juegos jugados', close: 'Cerrar', playing: 'Jugando ahora', played: 'Jugó hace', online: 'En línea', offline: 'Desconectado' },
         modalFav: { title: 'Juegos Favoritos', sub: 'Tu colección personal', close: 'Cerrar' },
-        modalFriends: { 
-            title: 'Lista de Amigos', 
-            total: 'amigos en total', 
-            search: 'Buscar amigos o añadir ID...', 
-            close: 'Cerrar', 
-            viewAll: 'Ver todos los amigos', 
-            notFound: 'No se encontraron amigos.',
-            actions: { view: 'Ver Perfil', mute: 'Silenciar', remove: 'Eliminar Amigo', report: 'Denunciar / Bloquear' }
-        },
         rarity: { Legendary: 'Legendario', Epic: 'Épico', UltraRare: 'Ultra Raro', Rare: 'Raro', Common: 'Común' }
     }
   };
@@ -178,13 +160,12 @@ export default function ProfilePage() {
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
+  
+  // ESTADOS DEL NUEVO SISTEMA DE AMIGOS
   const [showFriendsModal, setShowFriendsModal] = useState(false);
-  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-
-  const [friendTab, setFriendTab] = useState<'friends' | 'requests'>('friends');
-  const [friendSearch, setFriendSearch] = useState("");
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [activeChatFriend, setActiveChatFriend] = useState<any | null>(null);
+
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
   const [editForm, setEditForm] = useState({ ...initialUserProfile, bio: initialUserProfile.bio_es });
   const [selectingMedia, setSelectingMedia] = useState<'cover' | 'avatar' | null>(null);
@@ -211,7 +192,6 @@ export default function ProfilePage() {
       
       const sessionUser = JSON.parse(storedSession);
       
-      // Precarga local
       setUserProfile(prev => ({
           ...prev,
           id: sessionUser.id,
@@ -224,13 +204,11 @@ export default function ProfilePage() {
       }));
 
       try {
-        // 1. PERFIL (CON DETECTOR DE SESIÓN ROTA)
         try {
             const resUser = await fetch(`http://localhost:8000/api/users/${sessionUser.id}`);
             
             if (resUser.ok) {
                 const freshUser = await resUser.json();
-                // Actualizamos la sesión con datos frescos
                 localStorage.setItem('user_session', JSON.stringify(freshUser));
                 
                 setUserProfile(prev => ({
@@ -245,31 +223,15 @@ export default function ProfilePage() {
                     xp: freshUser.xp
                 }));
             } else if (resUser.status === 404) {
-                // 🚨 ALERTA: EL USUARIO YA NO EXISTE EN LA DB
                 console.warn("Usuario no encontrado en DB. Cerrando sesión...");
-                localStorage.removeItem('user_session'); // Borramos la cookie vieja
-                router.push('/login'); // Lo mandamos a loguear
-                return; // Cortamos la ejecución
+                localStorage.removeItem('user_session'); 
+                router.push('/login'); 
+                return; 
             }
         } catch (e) { 
             console.warn("Backend offline o error de red"); 
         }
 
-        // 2. Amigos
-        let friendsData = [];
-        try {
-            const resFriends = await fetch(`http://localhost:8001/api/friends/${sessionUser.id}`);
-            if (resFriends.ok) friendsData = await resFriends.json();
-        } catch (e) { console.warn("Friends API unavailable"); }
-
-        // 3. Solicitudes
-        let requestsData = [];
-        try {
-            const resRequests = await fetch(`http://localhost:8001/api/friends/requests/${sessionUser.id}`);
-            if (resRequests.ok) requestsData = await resRequests.json();
-        } catch (e) { console.warn("Requests API unavailable"); }
-
-        // 4. Logros
         let achievementsData = [];
         try {
             const resAch = await fetch(`http://localhost:8001/api/users/${sessionUser.id}/achievements`);
@@ -292,19 +254,17 @@ export default function ProfilePage() {
             }
         } catch (e) { console.warn("Achievements API unavailable"); }
 
-        // Si falló el fetch, fallback al mock (allAchievements) SOLO si no hay datos
         const finalAchievements = achievementsData.length > 0 ? achievementsData : (sessionUser.id === 0 ? allAchievements : []);
 
         setUserProfile(prev => ({
             ...prev,
-            friendsList: friendsData,
-            requests: requestsData,
             achievements: finalAchievements,
             stats: {
                 ...prev.stats,
                 gamesOwned: collection.length,
-                achievements: finalAchievements.length, // Total real
-                friends: friendsData.length
+                achievements: finalAchievements.length, 
+                // Los amigos se cargan en el widget, pero mantenemos el stat si lo hubiera
+                friends: prev.stats.friends 
             }
         }));
 
@@ -318,8 +278,6 @@ export default function ProfilePage() {
     loadData();
   }, [router, collection.length]); 
 
-  // Reset de estados
-  useEffect(() => { if (!showFriendsModal) { setActiveMenuId(null); setFriendSearch(""); setFriendTab('friends'); } }, [showFriendsModal]);
   useEffect(() => {
     if (showAchievementsModal || showActivityModal || showFavoritesModal || showFriendsModal || showEditProfileModal) {
       document.body.style.overflow = 'hidden';
@@ -375,52 +333,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSendFriendRequest = async () => {
-      if (!friendSearch) return;
-      try {
-          const res = await fetch(`http://localhost:8001/api/friends/request`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ sender_id: userProfile.id, target_username: friendSearch })
-          });
-          if (res.ok) { alert("Solicitud enviada"); setFriendSearch(""); }
-          else { alert("Usuario no encontrado o solicitud ya existente"); }
-      } catch { alert("Error de conexión"); }
-  };
-
-  const handleAcceptRequest = async (id: number, senderUser: any) => {
-      try {
-          await fetch(`http://localhost:8001/api/friends/request/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'accept' })
-          });
-          setUserProfile(prev => ({ ...prev, requests: prev.requests.filter(r => r.id !== id), friendsList: [senderUser, ...prev.friendsList], stats: { ...prev.stats, friends: prev.stats.friends + 1 } }));
-      } catch { alert("Error"); }
-  };
-
-  const handleRejectRequest = async (id: number) => {
-      try {
-          await fetch(`http://localhost:8001/api/friends/request/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'reject' })
-          });
-          setUserProfile(prev => ({ ...prev, requests: prev.requests.filter(r => r.id !== id) }));
-      } catch { alert("Error"); }
-  };
-
-  const handleRemoveFriend = async (friendId: number) => {
-      setActiveMenuId(null);
-      setUserProfile(prev => ({ ...prev, friendsList: prev.friendsList.filter(f => f.id !== friendId), stats: { ...prev.stats, friends: Math.max(0, prev.stats.friends - 1) } }));
-  };
-
-  const handleMuteFriend = (id: number) => { setActiveMenuId(null); alert("User muted."); };
-  const handleReportFriend = (id: number) => { setActiveMenuId(null); alert("User reported."); };
-  const handleViewProfile = (id: number) => { setActiveMenuId(null); alert("Viewing profile..."); };
-
-  const filteredFriends = userProfile.friendsList.filter(friend => friend.name.toLowerCase().includes(friendSearch.toLowerCase()));
-
   if (loading) return <div className="h-screen flex items-center justify-center text-white bg-[#131119]">{t.loading}</div>;
   const safeUser = { name: userProfile.name, avatarUrl: userProfile.avatarUrl, favoritePlatform: userProfile.favoritePlatform, username: userProfile.name, role: 'User' };
 
@@ -442,7 +354,6 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={() => setShowEditProfileModal(false)} />
           <div className="relative w-full max-w-2xl max-h-[90vh] bg-[#131119] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden animate-modal-pop">
-            
             <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-[#1A1A20]">
               <div className="flex items-center gap-3">
                   {selectingMedia && <button onClick={() => setSelectingMedia(null)} className="mr-2 p-1 hover:bg-white/10 rounded-full transition-colors"><ChevronLeft size={24} className="text-white" /></button>}
@@ -450,7 +361,6 @@ export default function ProfilePage() {
               </div>
               <button onClick={() => setShowEditProfileModal(false)} className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
             </div>
-
             <div className="flex-1 overflow-y-auto p-6 bg-[#131119] no-scrollbar">
                {selectingMedia === 'cover' ? (
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -529,19 +439,19 @@ export default function ProfilePage() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center px-4"><div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowFavoritesModal(false)} /><div className="relative w-full max-w-5xl max-h-[85vh] bg-[#131119] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden animate-modal-pop"><div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-[#1A1A20]"><div className="flex items-center gap-3"><div className="p-2.5 rounded-xl bg-pink-500/10 text-pink-500"><Heart size={24} /></div><div><h2 className="text-xl font-black text-white">{t.modalFav.title}</h2><p className="text-sm text-gray-400 mt-1">{t.modalFav.sub}</p></div></div><button onClick={() => setShowFavoritesModal(false)} className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white"><X size={24} /></button></div><div className="flex-1 overflow-y-auto p-6 bg-[#131119] no-scrollbar grid grid-cols-3 gap-4">{favorites.map(game => (<Link href={`/game/${game.slug}`} key={game.id} className="relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5"><Image src={game.coverUrl} alt={game.name} fill className="object-cover" /></Link>))}</div></div></div>
       )}
 
-      {/* MODAL AMIGOS Y SOLICITUDES */}
+      {/* MODAL NUEVO DE AMIGOS */}
       {showFriendsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowFriendsModal(false)} />
-          <div className="relative w-full max-w-3xl max-h-[85vh] bg-[#131119] rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden animate-modal-pop">
-            <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between bg-[#1A1A20]"><div className="flex items-center gap-3"><div className="p-2.5 rounded-xl bg-green-500/10 text-green-500"><Users size={24} /></div><div><h2 className="text-xl font-black text-white">{t.modalFriends.title}</h2><p className="text-sm text-gray-400 mt-1">{userProfile.friendsList.length} {t.modalFriends.total}</p></div></div><button onClick={() => setShowFriendsModal(false)} className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white"><X size={24} /></button></div>
-            <div className="px-6 py-4 bg-[#131119] sticky top-0 z-10 border-b border-white/5 space-y-4">
-              <div className="flex gap-4"><button onClick={() => setFriendTab('friends')} className={`flex-1 pb-2 text-sm font-bold border-b-2 transition-colors ${friendTab === 'friends' ? 'text-white border-green-500' : 'text-gray-500 border-transparent'}`}>My Friends</button><button onClick={() => setFriendTab('requests')} className={`flex-1 pb-2 text-sm font-bold border-b-2 transition-colors flex justify-center items-center gap-2 ${friendTab === 'requests' ? 'text-white border-green-500' : 'text-gray-500 border-transparent'}`}>Requests {userProfile.requests.length > 0 && <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{userProfile.requests.length}</span>}</button></div>
-              {friendTab === 'friends' && (<div className="flex gap-2"><div className="relative group flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} /><input type="text" placeholder={t.modalFriends.search} value={friendSearch} onChange={(e) => setFriendSearch(e.target.value)} className="w-full bg-[#1A1A20] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-green-500/50" /></div><button onClick={handleSendFriendRequest} className="px-4 bg-[#1A1A20] border border-white/10 hover:border-green-500/50 text-gray-400 rounded-xl"><UserPlus size={20} /></button></div>)}
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#131119] no-scrollbar"><div className="grid grid-cols-1 gap-3 pb-20">{friendTab === 'friends' ? (filteredFriends.length > 0 ? (filteredFriends.map((friend) => (<div key={friend.id} className="relative flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group"><div className="relative shrink-0"><div className="w-12 h-12 rounded-full bg-neutral-800 border border-white/5 overflow-hidden">{friend.avatarUrl ? <Image src={friend.avatarUrl} alt={friend.name} fill className="object-cover"/> : <User size={20} className="text-gray-500 m-auto"/>}</div>{friend.isOnline && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-[#131119] rounded-full"></div>}</div><div className="flex-1"><h4 className="font-bold text-white">{friend.name}</h4><p className="text-xs text-gray-500">{friend.isOnline ? 'Online' : 'Offline'}</p></div><div className="flex gap-2"><button onClick={() => { setActiveChatFriend(friend); setShowFriendsModal(false); }} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"><MessageCircle size={18} /></button><div className="relative"><button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === friend.id ? null : friend.id); }} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"><MoreHorizontal size={18} /></button>{activeMenuId === friend.id && (<div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-50 p-1.5 space-y-0.5"><button onClick={() => handleViewProfile(friend.id)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/5"><ExternalLink size={14}/> {t.modalFriends.actions.view}</button><button onClick={() => handleRemoveFriend(friend.id)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold text-red-400 hover:bg-red-500/10"><UserMinus size={14}/> {t.modalFriends.actions.remove}</button></div>)}</div></div></div>))) : <div className="text-center py-10 text-gray-500"><p>{t.modalFriends.notFound}</p></div>) : userProfile.requests.map(req => (<div key={req.id} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-[#1A1A20] border border-white/5"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-neutral-800 border border-white/5 overflow-hidden relative">{req.avatarUrl ? <Image src={req.avatarUrl} alt={req.name} fill className="object-cover"/> : <User size={20} className="text-gray-500 m-auto"/>}</div><div><h4 className="font-bold text-white">{req.name}</h4><p className="text-xs text-gray-500">Wants to be your friend</p></div></div><div className="flex gap-2"><button onClick={() => handleAcceptRequest(req.id, req)} className="p-2 bg-green-500 hover:bg-green-400 text-black rounded-xl"><Check size={20} /></button><button onClick={() => handleRejectRequest(req.id)} className="p-2 bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-500 rounded-xl"><X size={20} /></button></div></div>))}</div></div><div className="px-6 py-4 bg-[#1A1A20] border-t border-white/5 flex justify-end"><button onClick={() => setShowFriendsModal(false)} className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">{t.modalFriends.close}</button></div></div></div>
+        <FriendsModal 
+            userId={userProfile.id} 
+            onClose={() => setShowFriendsModal(false)} 
+            onOpenChat={(friend) => {
+                setShowFriendsModal(false); 
+                setActiveChatFriend(friend); 
+            }} 
+        />
       )}
       
+      {/* CHAT */}
       {activeChatFriend && <ChatWindow friend={activeChatFriend} currentUserId={userProfile.id} onClose={() => setActiveChatFriend(null)} />}
       
       <Header user={safeUser} />
@@ -607,7 +517,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-8 flex flex-col h-full">
-                    {/* LOGROS (CONECTADOS A LA DB AHORA - SOLO SE MUESTRAN 4) */}
+                    {/* LOGROS */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-1"><h3 className="text-xl font-bold text-white flex items-center gap-2"><Trophy size={20} style={{ color: PALETTE.AMARILLO }} /> {t.achievements}</h3><button onClick={() => setShowAchievementsModal(true)} className="text-xs font-bold text-gray-500 hover:text-white transition-colors focus:outline-none">{t.viewAll}</button></div>
                         <div className="grid grid-cols-2 gap-3">
@@ -621,13 +531,10 @@ export default function ProfilePage() {
                             )})}
                         </div>
                     </div>
-                    {/* AMIGOS */}
-                    <div className="space-y-4 flex flex-col flex-1">
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2 px-1"><Users size={20} style={{ color: PALETTE.VERDE }} /> {t.friendsList}</h3>
-                        <div className="bg-[#1A1A20] rounded-2xl border border-white/5 p-6 space-y-1 flex flex-col flex-1">
-                            {userProfile.friendsList.length > 0 ? (userProfile.friendsList.slice(0, 5).map((friend) => (<div key={friend.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer group"><div className="relative"><div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden border border-white/5">{friend.avatarUrl ? <Image src={friend.avatarUrl} alt={friend.name} fill className="object-cover"/> : <User size={14} className="text-gray-500" />}</div>{friend.isOnline && <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-[#1A1A20] rounded-full"></div>}</div><div className="flex-1 min-w-0"><p className="text-sm font-bold text-gray-200 truncate group-hover:text-white">{friend.name}</p><p className={`text-xs truncate ${friend.isOnline ? 'text-green-400/80' : 'text-gray-600'}`}>{language === 'EN' ? friend.status_en : friend.status_es}</p></div></div>))) : <div className="flex flex-col items-center justify-center h-32 text-gray-500 text-xs text-center"><Users size={24} className="mb-2 opacity-50"/><p>No friends yet.</p></div>}
-                            <div className="mt-auto"><button onClick={() => setShowFriendsModal(true)} className="w-full py-2 text-center text-xs font-bold text-gray-500 hover:text-white transition-colors mt-2">{t.modalFriends.viewAll}</button></div>
-                        </div>
+                    
+                    {/* WIDGET DE AMIGOS (Mejorado) */}
+                    <div className="col-span-12 lg:col-span-4 h-full">
+                        <FriendsWidget userId={userProfile.id} currentUserId={userProfile.id} />
                     </div>
                 </div>
             </div>

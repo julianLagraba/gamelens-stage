@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Smile } from 'lucide-react';
 import Image from 'next/image';
+import { useNotifications } from '@/app/context/NotificationContext';
 
 interface Message {
   id: number;
@@ -22,65 +23,93 @@ export const ChatWindow = ({ friend, currentUserId, onClose }: ChatWindowProps) 
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Usamos un try-catch en el hook por si el provider aún no carga (evita pantalla blanca)
+  let refreshNotifications = () => {};
+  try {
+      const context = useNotifications();
+      refreshNotifications = context.refreshNotifications;
+  } catch (e) {
+      console.warn("Notification context not ready yet");
+  }
 
-  // 1. Cargar mensajes y hacer Polling (actualización automática)
+  // 1. CARGAR MENSAJES (Polling)
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        // Nota: Pasamos el ID del usuario actual como query param
+        // 🔥 PUERTO 8001 CONFIRMADO
         const res = await fetch(`http://localhost:8001/api/chat/${friend.id}?current_user_id=${currentUserId}`);
         if (res.ok) {
           const data = await res.json();
           setMessages(data);
+        } else {
+            console.error("Error backend:", await res.text());
         }
       } catch (error) {
-        console.error("Error fetching chat:", error);
+        console.error("Fetch error:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMessages();
-    
-    // Actualizar cada 2 segundos para ver si el amigo respondió
-    const interval = setInterval(fetchMessages, 2000); 
-
+    const interval = setInterval(fetchMessages, 3000); // Revisar cada 3 segs
     return () => clearInterval(interval);
   }, [friend.id, currentUserId]);
 
-  // 2. Auto-scroll al fondo cuando llega un mensaje nuevo
+  // 2. MARCAR LEÍDO
+  useEffect(() => {
+    const markRead = async () => {
+        if(messages.length === 0) return;
+        try {
+            await fetch(`http://localhost:8001/api/chat/read/${friend.id}?current_user_id=${currentUserId}`, {
+                method: 'PUT'
+            });
+            refreshNotifications(); 
+        } catch (e) { console.error(e); }
+    };
+    markRead();
+  }, [messages.length, friend.id, currentUserId]);
+
+  // Scroll al fondo
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 3. Enviar mensaje
+  // 3. ENVIAR MENSAJE
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!newMessage.trim()) return;
 
-    // Optimismo: Agregarlo visualmente antes de confirmar (para que se sienta rápido)
-    const tempMsg = { id: Date.now(), sender_id: currentUserId, content: newMessage, timestamp: new Date().toISOString() };
+    // Guardamos texto temporal para limpiar input rápido
+    const contentToSend = newMessage;
+    setNewMessage(""); 
+
+    // Optimismo UI: Lo mostramos antes de que el servidor confirme
+    const tempMsg = { id: Date.now(), sender_id: currentUserId, content: contentToSend, timestamp: new Date().toISOString() };
     setMessages(prev => [...prev, tempMsg]);
-    setNewMessage("");
 
     try {
-      await fetch(`http://localhost:8001/api/chat/send?sender_id=${currentUserId}`, {
+      const res = await fetch(`http://localhost:8001/api/chat/send?sender_id=${currentUserId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiver_id: friend.id,
-          content: tempMsg.content
+          content: contentToSend
         })
       });
-      // No necesitamos hacer nada si sale bien, el Polling traerá el mensaje real pronto
+      
+      if (!res.ok) {
+          alert("Error al enviar mensaje. Revisa la consola.");
+          console.error(await res.text());
+      }
     } catch (error) {
-      console.error("Error sending message");
-      // Aquí podrías mostrar un error visual si falla
+      console.error("Error network sending message", error);
     }
   };
 
   return (
-    <div className="fixed bottom-0 right-20 z-50 w-80 md:w-96 bg-[#131119] border border-white/10 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-up h-[500px]">
+    <div className="fixed bottom-0 right-20 z-[200] w-80 md:w-96 bg-[#131119] border border-white/10 rounded-t-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-up h-[500px]">
       
       {/* HEADER */}
       <div className="bg-[#1A1A20] p-4 flex items-center justify-between border-b border-white/5 cursor-pointer" onClick={onClose}>

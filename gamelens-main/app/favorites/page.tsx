@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -11,8 +11,6 @@ import {
 import { Header } from '@/components/Header';
 import { VerticalMenu } from '@/components/VerticalMenu';
 import { useLanguage } from '@/app/context/LanguageContext';
-
-// 1. IMPORTANTE: Importar el hook del contexto (Ruta relativa para evitar errores)
 import { useFavorites } from '../context/FavoritesContext';
 
 export const dynamic = 'force-dynamic';
@@ -27,15 +25,13 @@ const PALETTE = {
   MORADO: '#4530BE',
 };
 
-// CLAVES DE FILTRO
-const FILTER_KEYS = ['All', 'RPG', 'Indie', 'Action', 'Open World'];
-type SortOption = 'score_desc' | 'score_asc' | 'name'; // Sacamos 'date' porque el contexto aun no guarda fecha
+// Mismos filtros que en AllGames para consistencia
+const FILTER_KEYS = ['All', 'RPG', 'Action', 'FPS', 'Strategy', 'Indie', 'Shooter', 'Open World'];
+type SortOption = 'score_desc' | 'score_asc' | 'name'; 
 
 export default function FavoritesPage() {
-  // 2. USAR EL HOOK REAL: Esto trae los datos guardados en memoria/localstorage
   const { favorites, removeFavorite } = useFavorites();
   
-  // Estado local solo para filtros visuales
   const [activeFilter, setActiveFilter] = useState('All');
   const [sortBy, setSortBy] = useState<SortOption>('score_desc');
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -50,11 +46,8 @@ export default function FavoritesPage() {
         viewDetails: 'View Details',
         removeTooltip: 'Remove from favorites',
         sortTooltip: 'Sort by...',
-        sortOptions: {
-            highScore: 'Highest Score',
-            name: 'Name (A-Z)'
-        },
-        filters: { 'All': 'All', 'RPG': 'RPG', 'Indie': 'Indie', 'Action': 'Action', 'Open World': 'Open World' },
+        sortOptions: { highScore: 'Highest Score', name: 'Name (A-Z)' },
+        filters: { 'All': 'All', 'RPG': 'RPG', 'Indie': 'Indie', 'Action': 'Action', 'Open World': 'Open World', 'Shooter': 'Shooter', 'Strategy': 'Strategy', 'FPS': 'FPS' },
         empty: {
             title: 'No favorites yet',
             filterDesc: 'No games found with current filters.',
@@ -69,11 +62,8 @@ export default function FavoritesPage() {
         viewDetails: 'Ver Detalles',
         removeTooltip: 'Eliminar de favoritos',
         sortTooltip: 'Ordenar por...',
-        sortOptions: {
-            highScore: 'Mayor Puntaje',
-            name: 'Nombre (A-Z)'
-        },
-        filters: { 'All': 'Todos', 'RPG': 'RPG', 'Indie': 'Indie', 'Action': 'Acción', 'Open World': 'Mundo Abierto' },
+        sortOptions: { highScore: 'Mayor Puntaje', name: 'Nombre (A-Z)' },
+        filters: { 'All': 'Todos', 'RPG': 'RPG', 'Indie': 'Indie', 'Action': 'Acción', 'Open World': 'Mundo Abierto', 'Shooter': 'Shooter', 'Strategy': 'Estrategia', 'FPS': 'FPS' },
         empty: {
             title: 'No tienes favoritos aún',
             filterDesc: 'No se encontraron juegos con los filtros actuales.',
@@ -85,16 +75,21 @@ export default function FavoritesPage() {
 
   const t = translations[language.toLowerCase() as 'en' | 'es'];
 
-  // Lógica de Filtrado y Ordenamiento (Sobre datos reales 'favorites')
+  // --- LÓGICA DE FILTRADO ---
   const filteredFavorites = favorites.filter(game => {
     if (activeFilter === 'All') return true;
     
+    // Normalización de filtro
     let searchGenre = activeFilter;
-    if (activeFilter === 'Action') searchGenre = 'Acción';
-    if (activeFilter === 'Open World') searchGenre = 'Mundo Abierto';
-
+    
     // Verificación segura de géneros
-    return game.genres?.some(g => g.includes(searchGenre) || g.includes(activeFilter));
+    if (Array.isArray(game.genres)) {
+        return game.genres.some((g: any) => {
+            const genreName = (typeof g === 'string' ? g : g.name) || '';
+            return genreName.toLowerCase().includes(searchGenre.toLowerCase());
+        });
+    }
+    return false;
   }).sort((a, b) => {
     if (sortBy === 'score_desc') return (b.score || 0) - (a.score || 0);
     if (sortBy === 'score_asc') return (a.score || 0) - (b.score || 0);
@@ -107,13 +102,15 @@ export default function FavoritesPage() {
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .game-card-hover { transition: all 0.3s ease !important; }
-        .game-card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5); z-index: 10; }
+        
+        /* ESTILOS EXACTOS DE ALL GAMES */
+        .game-card-hover { transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important; transform-origin: center center !important; will-change: transform; }
+        .game-card-hover:hover { transform: scale(1.04) !important; z-index: 50 !important; filter: brightness(1.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5); }
+        
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
       `}</style>
 
-      {/* Header ya no necesita props manuales, usa AuthContext internamente */}
       <Header />
 
       <main className="flex-1 px-6 md:px-10 max-w-[1920px] mx-auto w-full relative flex flex-col">
@@ -127,7 +124,7 @@ export default function FavoritesPage() {
 
           <div className="flex-1 w-full min-w-0 space-y-8 flex flex-col pt-6 md:pt-10 pb-10 animate-fade-up">
             
-            <div className="sticky top-[73px] z-40 bg-[#131119] pt-2 pb-6 -mt-2 border-b border-white/5 md:border-none">
+            <div className="sticky top-[73px] z-40 bg-[#131119]/95 backdrop-blur-sm pt-2 pb-6 -mt-2 border-b border-white/5 md:border-none">
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 relative">
                 
                 <div>
@@ -148,11 +145,11 @@ export default function FavoritesPage() {
                         onClick={() => setActiveFilter(filterKey)} 
                         className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                           activeFilter === filterKey 
-                            ? 'bg-white text-black' 
+                            ? 'bg-[#FD1372] text-white border border-[#FD1372]' 
                             : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/5' 
                         }`}
                       >
-                        {t.filters[filterKey as keyof typeof t.filters]}
+                        {t.filters[filterKey as keyof typeof t.filters] || filterKey}
                       </button>
                     ))}
                   </div>
@@ -185,7 +182,7 @@ export default function FavoritesPage() {
               </div>
             </div>
 
-            {/* Grilla de Juegos REALES */}
+            {/* --- GRILLA DE JUEGOS (DISEÑO COPIADO DE ALL GAMES) --- */}
             {filteredFavorites.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                     {filteredFavorites.map((game) => (
@@ -194,41 +191,51 @@ export default function FavoritesPage() {
                                 href={`/game/${game.slug}`} 
                                 className="game-card-hover block relative bg-[#1A1A20] rounded-2xl p-3 border border-white/5 hover:border-pink-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-500/10 no-underline"
                             >
+                                {/* IMAGEN Y BADGE DE PUNTUACIÓN */}
                                 <div className="relative w-full aspect-[5/6] rounded-xl overflow-hidden mb-3 bg-gray-800">
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10 pointer-events-none" />
                                     <div className="w-full h-full bg-gray-800 group-hover:scale-105 transition-transform duration-500 relative">
                                         <Image
-                                            src={game.coverUrl} // 3. DATO REAL DEL CONTEXTO
+                                            src={game.coverUrl}
                                             alt={game.name}
                                             fill
                                             className="object-cover"
-                                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                                            sizes="(max-width: 640px) 50vw, 20vw"
                                             unoptimized
                                         />
                                     </div>
+                                    
+                                    {/* Score Estilo All Games */}
                                     <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
                                         <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                        <span className="text-xs font-bold text-white">{game.score}</span>
+                                        <span className="text-xs font-bold text-white">{game.score || 0}</span>
                                     </div>
+
+                                    {/* Titulo Abajo */}
                                     <div className="absolute bottom-3 left-3 right-3 z-20">
                                         <h3 className="font-bold text-white text-base leading-tight drop-shadow-md text-left line-clamp-2">{game.name}</h3>
                                     </div>
                                 </div>
 
+                                {/* INFO INFERIOR Y TAGS */}
                                 <div className="px-1">
                                     <div className="flex justify-between items-center mb-3">
+                                        {/* --- GÉNERO EXACTO DE ALL GAMES --- */}
                                         <span className="px-2 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate max-w-[60%]">
-                                            {game.genres?.[0] || 'Game'}
+                                            {game.genres && game.genres.length > 0 
+                                                ? (typeof game.genres[0] === 'string' ? game.genres[0] : game.genres[0].name)
+                                                : 'Game'}
                                         </span>
                                     </div>
+
                                     <div className="pt-3 border-t border-white/5 flex items-center justify-between">
                                         <span className="text-xs font-medium text-pink-400 group-hover:text-pink-300 flex items-center gap-1">{t.viewDetails}</span>
-                                        {/* BOTÓN BORRAR REAL */}
+                                        
                                         <button 
                                             onClick={(e) => {
                                                 e.preventDefault(); 
                                                 e.stopPropagation();
-                                                removeFavorite(game.id); // Llama a la función borrar del contexto
+                                                removeFavorite(game.id);
                                             }}
                                             className="p-1.5 rounded-full text-gray-500 hover:text-white hover:bg-red-500/80 transition-colors z-20"
                                             title={t.removeTooltip}
@@ -242,7 +249,6 @@ export default function FavoritesPage() {
                     ))}
                 </div>
             ) : (
-                // Empty State
                 <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-[#1A1A20]/30">
                     <div className="w-20 h-20 bg-neutral-800/50 rounded-full flex items-center justify-center mb-6">
                         <Heart size={40} className="text-gray-600" />
@@ -260,7 +266,6 @@ export default function FavoritesPage() {
                     </Link>
                 </div>
             )}
-
           </div>
         </div>
       </main>

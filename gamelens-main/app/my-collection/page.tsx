@@ -16,7 +16,6 @@ import { useCollection } from '@/app/context/CollectionContext';
 
 export const dynamic = 'force-dynamic';
 
-// 1. TU PALETA DE COLORES EXACTA (La usaré para los bordes y textos de estado)
 const COLORS = {
   ROSA: '#FD1372',
   VIOLETA: '#A400FF',
@@ -29,40 +28,20 @@ const COLORS = {
 
 type SortOption = 'name' | 'id_desc';
 
-// 2. CONFIGURACIÓN DE ESTADOS
 const STATUS_OPTIONS = [
-  { 
-    key: 'playing', 
-    label: 'Playing', 
-    icon: PlayCircle, 
-    color: COLORS.AZUL 
-  },
-  { 
-    key: 'completed', 
-    label: 'Completed', 
-    icon: Trophy, 
-    color: COLORS.DORADO 
-  },
-  { 
-    key: 'dropped', 
-    label: 'Dropped', 
-    icon: XCircle, 
-    color: COLORS.ROSA 
-  },
-  { 
-    key: 'owned', 
-    label: 'Backlog', 
-    icon: Clock, 
-    color: COLORS.VERDE 
-  },
+  { key: 'playing', label: 'Playing', icon: PlayCircle, color: COLORS.AZUL },
+  { key: 'completed', label: 'Completed', icon: Trophy, color: COLORS.DORADO },
+  { key: 'dropped', label: 'Dropped', icon: XCircle, color: COLORS.ROSA },
+  { key: 'owned', label: 'Backlog', icon: Clock, color: COLORS.VERDE },
 ];
 
 export default function MyCollectionPage() {
   const { collection, removeFromCollection, addToCollection } = useCollection();
   
+  // Estado para el filtro activo
   const [activeFilter, setActiveFilter] = useState('All');
   const [sortBy, setSortBy] = useState<SortOption>('id_desc');
-  const [showSortMenu, setShowSortMenu] = useState(false);
+  // const [showSortMenu, setShowSortMenu] = useState(false); // (Opcional si quieres ordenar luego)
 
   const { language } = useLanguage();
 
@@ -74,7 +53,6 @@ export default function MyCollectionPage() {
         viewDetails: 'View Details',
         removeTooltip: 'Remove from collection',
         sortTooltip: 'Sort by...',
-        sortOptions: { newest: 'Newest Added', name: 'Name (A-Z)' },
         empty: { title: 'Your collection is empty', generalDesc: 'Start building your library by clicking the (+) on any game.', button: 'Discover Games' }
     },
     es: {
@@ -84,7 +62,6 @@ export default function MyCollectionPage() {
         viewDetails: 'Ver Detalles',
         removeTooltip: 'Eliminar de la colección',
         sortTooltip: 'Ordenar por...',
-        sortOptions: { newest: 'Agregados Recientemente', name: 'Nombre (A-Z)' },
         empty: { title: 'Tu colección está vacía', generalDesc: 'Empieza a armar tu biblioteca haciendo clic en el (+) de cualquier juego.', button: 'Descubrir Juegos' }
     }
   };
@@ -95,11 +72,17 @@ export default function MyCollectionPage() {
     return STATUS_OPTIONS.find(s => s.key === statusKey) || STATUS_OPTIONS[3]; 
   };
 
-  const filteredCollection = collection.sort((a, b) => {
-    if (sortBy === 'id_desc') return b.id - a.id; 
-    if (sortBy === 'name') return a.game_name.localeCompare(b.game_name);
-    return 0;
-  });
+  // --- LÓGICA DE FILTRADO Y ORDENAMIENTO ---
+  const filteredCollection = collection
+    .filter(item => {
+        if (activeFilter === 'All') return true;
+        return item.status === activeFilter;
+    })
+    .sort((a, b) => {
+        if (sortBy === 'id_desc') return b.id - a.id; 
+        if (sortBy === 'name') return a.game_name.localeCompare(b.game_name);
+        return 0;
+    });
 
   const handleStatusChange = (e: React.MouseEvent, item: any, newStatus: string) => {
     e.preventDefault();
@@ -137,11 +120,11 @@ export default function MyCollectionPage() {
 
           <div className="flex-1 w-full min-w-0 space-y-8 flex flex-col pt-6 md:pt-10 pb-10 animate-fade-up">
             
+            {/* HEADER DE LA SECCIÓN */}
             <div className="sticky top-[73px] z-40 bg-[#131119] pt-2 pb-6 -mt-2 border-b border-white/5 md:border-none">
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 relative">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2 font-display tracking-tight">
-                    {/* El icono del título sigue siendo verde, como el del menú */}
                     <Library size={24} style={{ color: COLORS.VERDE }} /> {t.title}
                     <span className="text-xs font-normal text-gray-500 bg-white/5 px-2 py-1 rounded ml-2 font-sans">
                       {filteredCollection.length} {t.results}
@@ -150,8 +133,36 @@ export default function MyCollectionPage() {
                   <p className="text-gray-400 text-sm">{t.subtitle}</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Filtros futuros */}
+                {/* --- FILTROS FUNCIONALES --- */}
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 xl:pb-0">
+                  {/* Botón ALL */}
+                  <button 
+                    onClick={() => setActiveFilter('All')}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                        activeFilter === 'All' 
+                        ? 'bg-[#00FF62] text-black border-[#00FF62]' 
+                        : 'bg-white/5 text-gray-400 border-white/5 hover:border-white/20 hover:text-white'
+                    }`}
+                  >
+                    All Games
+                  </button>
+
+                  {/* Botones de Estado */}
+                  {STATUS_OPTIONS.map((status) => (
+                      <button
+                        key={status.key}
+                        onClick={() => setActiveFilter(status.key)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                            activeFilter === status.key
+                            ? 'bg-white/10 text-white' // Activo
+                            : 'bg-white/5 text-gray-400 border-white/5 hover:border-white/20 hover:text-white' // Inactivo
+                        }`}
+                        style={activeFilter === status.key ? { borderColor: status.color, color: status.color } : {}}
+                      >
+                        <status.icon size={14} />
+                        {status.label}
+                      </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -180,7 +191,7 @@ export default function MyCollectionPage() {
                                         />
                                     </div>
                                     
-                                    {/* --- BADGE ESTADO (Estilo Contorno) --- */}
+                                    {/* --- BADGE ESTADO --- */}
                                     <div className="absolute top-2 right-2 z-30 group/status"> 
                                         <button 
                                             onClick={(e) => e.preventDefault()}
@@ -193,12 +204,12 @@ export default function MyCollectionPage() {
                                         >
                                             <currentConfig.icon size={12} strokeWidth={3} />
                                             <span className="text-[10px] font-black uppercase tracking-wide">
-                                              {currentConfig.label}
+                                                {currentConfig.label}
                                             </span>
                                             <ChevronDown size={10} style={{ opacity: 0.7 }} />
                                         </button>
 
-                                        {/* --- DROPDOWN (Estilo Contorno) --- */}
+                                        {/* --- DROPDOWN --- */}
                                         <div className="absolute right-0 top-full mt-1 w-32 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl overflow-hidden opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all duration-200 transform origin-top-right z-40">
                                             <div className="p-1">
                                                 {STATUS_OPTIONS.map((option) => {
@@ -231,7 +242,6 @@ export default function MyCollectionPage() {
 
                                 <div className="px-1">
                                     <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                                        {/* 🔥 CORRECCIÓN AQUÍ: Usamos clases rosa y hover rosa */}
                                         <span className="text-xs font-medium text-pink-400 group-hover/card:text-pink-300 flex items-center gap-1 transition-colors">
                                           {t.viewDetails}
                                         </span>

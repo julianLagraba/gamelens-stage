@@ -8,32 +8,27 @@ import { Heart, Search, User, Menu, Globe, ChevronDown, LogOut, Settings } from 
 import { VerticalMenu } from '@/components/VerticalMenu';
 import { useLanguage } from '../app/context/LanguageContext';
 import { useAuth } from '../app/context/AuthContext';
+import { useNotifications } from '@/app/context/NotificationContext';
 
 export function Header() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // ESTADO LOCAL PARA EL USUARIO REAL (Puente entre Registro y Header)
   const [localUser, setLocalUser] = useState<any>(null);
-
   const { language, toggleLanguage } = useLanguage();
-  const { user: contextUser, logout } = useAuth(); // Renombramos user a contextUser
-
+  const { user: contextUser, logout } = useAuth();
+  const { notifications } = useNotifications();
 
   useEffect(() => {
     const storedSession = localStorage.getItem('user_session');
     
     if (storedSession) {
       try {
-        // 1. PRIMERO: Definimos la variable 'user'
         const user = JSON.parse(storedSession);
         
-        // 2. SEGUNDO: Actualizamos el estado visual
         setLocalUser(user);
 
-        // 3. TERCERO: Ahora sí podemos usar 'user.id' porque ya existe
         if (user && user.id) {
             fetch(`http://127.0.0.1:8001/api/users/${user.id}/favorites`)
               .then(res => {
@@ -56,13 +51,9 @@ export function Header() {
     }
   }, []);
 
-  // 2. DECIDIMOS QUÉ USUARIO MOSTRAR (Prioridad: Usuario Real > Usuario Contexto)
   const activeUser = localUser || contextUser;
-
-  // Adaptador para nombres de campos (DB usa 'username', Context viejo usa 'name')
   const displayName = activeUser?.username || activeUser?.name || 'Guest';
   const displayRole = activeUser?.role || 'Guest';
-  // DB usa 'avatar_url', Context viejo usa 'avatarUrl'
   const displayAvatar = activeUser?.avatar_url || activeUser?.avatarUrl;
 
   const translations = {
@@ -82,9 +73,9 @@ export function Header() {
     }
   };
 
-  // 3. LOGOUT REAL
+  // LOGOUT 
   const handleLogout = () => {
-    logout(); // Limpiar contexto (si hace algo)
+    logout(); // Limpiar contexto
     localStorage.removeItem('user_session'); // Borrar sesión real
     setLocalUser(null); // Limpiar estado local
     setIsUserMenuOpen(false);
@@ -151,15 +142,26 @@ export function Header() {
                 </div>
                 
                 {/* AVATAR */}
-                <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-blue-500 to-purple-500 group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
-                    <div className="w-full h-full rounded-full bg-neutral-900 flex items-center justify-center overflow-hidden relative">
-                        {displayAvatar ? (
-                            <Image src={displayAvatar} alt="Avatar" fill className="object-cover" />
-                        ) : (
-                            <User size={20} className="text-gray-400" />
-                        )}
-                    </div>
-                </div>
+                  <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-blue-500 to-purple-500 group-hover:from-purple-500 group-hover:to-pink-500 transition-all relative">
+                      
+                      <div className="w-full h-full rounded-full bg-neutral-900 flex items-center justify-center overflow-hidden relative">
+                          {displayAvatar ? (
+                              <Image src={displayAvatar} alt="Avatar" fill className="object-cover" />
+                          ) : (
+                              <User size={20} className="text-gray-400" />
+                          )}
+                      </div>
+
+                      {/* NOTIFICACIÓN */}
+                      {notifications.total > 0 && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FD1372] rounded-full flex items-center justify-center border-2 border-[#131119] z-10 animate-pulse">
+                              <span className="text-[10px] font-bold text-white leading-none pt-[1px]">
+                                  {notifications.total > 99 ? '99+' : notifications.total}
+                              </span>
+                          </div>
+                      )}
+                      
+                  </div>
                 <ChevronDown size={14} className={`text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 

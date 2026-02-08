@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { VerticalMenu } from '@/components/VerticalMenu';
 import { Header } from '@/components/Header';
-// 1. IMPORTAR CONTEXTO
 import { useLanguage } from '@/app/context/LanguageContext';
 
 // --- PALETA GAMELENS ---
@@ -31,26 +30,20 @@ const PALETTE = {
 interface UserData {
   id?: number;
   name: string;
+  username?: string;
+  email?: string;
   avatarUrl: string;
   favoritePlatform: string;
 }
 
-// --- ESTILOS CSS PUROS PARA ICONOS (Solo para Discord) ---
-const iconStyle = {
-  width: '24px',
-  height: '24px',
-  fill: 'currentColor',
-  display: 'block'
-};
+const iconStyle = { width: '24px', height: '24px', fill: 'currentColor', display: 'block' };
 
-// --- ICONOS INLINE (Solo Discord) ---
 const DiscordIcon = () => (
   <svg viewBox="0 0 24 24" style={iconStyle} xmlns="http://www.w3.org/2000/svg">
     <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
   </svg>
 );
 
-// --- COMPONENTE: TOGGLE SWITCH ---
 const ToggleSwitch = ({ checked, onChange, color = PALETTE.VERDE }: { checked: boolean; onChange: () => void; color?: string }) => (
   <button 
     onClick={onChange}
@@ -61,7 +54,6 @@ const ToggleSwitch = ({ checked, onChange, color = PALETTE.VERDE }: { checked: b
   </button>
 );
 
-// Definición de tipos para las conexiones
 type Connection = {
   id: string;
   name: string;
@@ -77,13 +69,18 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [activeTab, setActiveTab] = useState<'account' | 'connections' | 'privacy' | 'notifications'>('account');
 
-  // --- ESTADOS DEL FORMULARIO ---
+  // Hook de idioma (con manejo seguro de setLanguage)
+  const languageContext = useLanguage();
+  const { language } = languageContext;
+  // @ts-ignore - Ignoramos error de tipo por si setLanguage no está definido en el contexto aún
+  const setLanguage = languageContext.setLanguage; 
+
+  // Estados del formulario (Inicializados vacíos para evitar error "Uncontrolled input")
   const [formData, setFormData] = useState({
-    displayName: "Valentín", 
-    username: "valentin_dev", 
-    email: "valentin_dev@gamelens.com",
-    bio: "Amante de los RPGs de mundo abierto y los shooters competitivos.",
-    language: "es-la", 
+    displayName: "", 
+    username: "", 
+    email: "",
+    language: "es", 
     twoFactor: true,
     publicProfile: true,
     showActivity: true,
@@ -93,24 +90,109 @@ export default function SettingsPage() {
     marketingEmails: false
   });
 
-  // 2. HOOK DE IDIOMA
-  const { language } = useLanguage();
+  // Estado de conexiones
+  const [connections, setConnections] = useState<Connection[]>([
+    { id: 'steam', name: 'Steam', connected: true, user: 'Valen_Dev', color: '#171a21', image: '/Steam.svg' },
+    { id: 'epic', name: 'Epic Games', connected: true, user: 'Valen_Dev', color: '#2a2a2a', image: '/Epic.svg' },
+    { id: 'discord', name: 'Discord', connected: true, user: 'Valentin#0001', color: '#5865F2', icon: DiscordIcon },
+    { id: 'psn', name: 'PlayStation', connected: false, user: '', color: '#003791', image: '/Play.svg' },
+    { id: 'xbox', name: 'Xbox Live', connected: false, user: '', color: '#107C10', image: '/Xbox.svg' },
+  ]);
 
-  // 3. DICCIONARIO
+  // CARGAR DATOS AL INICIO
+  useEffect(() => {
+    // 1. Cargar Usuario desde localStorage
+    const storedSession = localStorage.getItem('user_session');
+    let currentUser: UserData = { name: 'Guest', username: 'guest', email: '', avatarUrl: '', favoritePlatform: 'PC' };
+
+    if (storedSession) {
+        try {
+            const parsed = JSON.parse(storedSession);
+            currentUser = { ...currentUser, ...parsed }; // Fusionar con default
+        } catch (e) { console.error("Error parsing session", e); }
+    }
+
+    // 2. Cargar preferencias guardadas (si existen)
+    const storedPrefs = localStorage.getItem('user_preferences');
+    let prefs = {};
+    if (storedPrefs) {
+        try { prefs = JSON.parse(storedPrefs); } catch (e) {}
+    }
+
+    // 3. Cargar conexiones guardadas
+    const storedConns = localStorage.getItem('user_connections');
+    if (storedConns) {
+        try { setConnections(JSON.parse(storedConns)); } catch(e) {}
+    }
+
+    setUser(currentUser);
+    
+    // 4. Llenar formulario con datos reales + preferencias
+    setFormData(prev => ({
+        ...prev,
+        displayName: currentUser.name || "",
+        username: currentUser.username || currentUser.name.toLowerCase().replace(/\s/g, '') || "",
+        email: currentUser.email || 'user@gamelens.com',
+        language: language, // Usar idioma actual del contexto
+        ...prefs // Sobreescribir con preferencias guardadas
+    }));
+
+    setLoading(false);
+  }, [language]);
+
+  // GUARDAR CAMBIOS
+  const handleSave = () => {
+      // 1. Actualizar Usuario en localStorage
+      const updatedUser = { 
+          ...user, 
+          name: formData.displayName, 
+          username: formData.username, 
+          email: formData.email,
+          // Aseguramos que avatarUrl y favoritePlatform existan
+          avatarUrl: user?.avatarUrl || '',
+          favoritePlatform: user?.favoritePlatform || 'PC'
+      };
+      localStorage.setItem('user_session', JSON.stringify(updatedUser));
+      setUser(updatedUser); 
+
+      // 2. Actualizar Idioma Globalmente (Si existe la función)
+      if (typeof setLanguage === 'function') {
+          setLanguage(formData.language);
+      }
+
+      // 3. Guardar Preferencias (Toggles)
+      const preferences = {
+          twoFactor: formData.twoFactor,
+          publicProfile: formData.publicProfile,
+          showActivity: formData.showActivity,
+          allowFriendRequests: formData.allowFriendRequests,
+          emailNotifs: formData.emailNotifs,
+          pushNotifs: formData.pushNotifs,
+          marketingEmails: formData.marketingEmails
+      };
+      localStorage.setItem('user_preferences', JSON.stringify(preferences));
+
+      // 4. Guardar Conexiones
+      localStorage.setItem('user_connections', JSON.stringify(connections));
+
+      // 5. Feedback visual
+      alert(language === 'es' ? "¡Cambios guardados con éxito!" : "Settings saved successfully!");
+      
+      // Opcional: Recargar para refrescar Header
+      window.location.reload(); 
+  };
+
+  const handleToggleConnection = (id: string) => {
+    setConnections(prev => prev.map(c => c.id === id ? { ...c, connected: !c.connected } : c));
+  };
+
   const translations = {
     en: {
         loading: 'Loading settings...',
         title: 'Settings',
         subtitle: 'Manage your account, connections, and GameLens preferences.',
         save: 'Save Changes',
-        // Tabs
-        tabs: {
-            account: 'Account',
-            connections: 'Connections',
-            privacy: 'Privacy',
-            notifications: 'Notifications'
-        },
-        // Account Section
+        tabs: { account: 'Account', connections: 'Connections', privacy: 'Privacy', notifications: 'Notifications' },
         accountInfo: 'Account Information',
         displayName: 'Display Name',
         displayNameDesc: 'This is the name your friends will see.',
@@ -118,9 +200,7 @@ export default function SettingsPage() {
         usernameDesc: 'Unique identifier. Used for mentions and URLs.',
         email: 'Email',
         langLabel: 'Language',
-        // Security Section
         security: 'Security',
-        // CORRECCIÓN AQUÍ: Renombrado de 2fa a twoFA para evitar error de sintaxis
         twoFA: 'Two-Factor Authentication (2FA)',
         twoFADesc: 'Add an extra layer of security.',
         password: 'Password',
@@ -130,14 +210,12 @@ export default function SettingsPage() {
         dangerDesc: 'These actions are irreversible. Be careful.',
         deleteAccount: 'Delete Account',
         logoutAll: 'Log Out Everywhere',
-        // Connections Section
         connectedPlat: 'Connected Platforms',
         connectedDesc: 'Sync your games, achievements, and activity by connecting your accounts.',
         connectedAs: 'Connected as',
         notConnected: 'Not connected',
         disconnect: 'Disconnect',
         connect: 'Connect',
-        // Privacy Section
         privacyVis: 'Privacy & Visibility',
         publicProfile: 'Public Profile',
         publicDesc: 'Anyone can see your profile and stats.',
@@ -145,7 +223,6 @@ export default function SettingsPage() {
         showActivityDesc: 'Shows what you are playing in real-time.',
         friendReq: 'Allow Friend Requests',
         friendReqDesc: 'Users can send you invitations.',
-        // Notifications Section
         notifPref: 'Notification Preferences',
         emails: 'Emails',
         emailsDesc: 'Weekly digest, security, and support.',
@@ -159,14 +236,7 @@ export default function SettingsPage() {
         title: 'Configuración',
         subtitle: 'Administra tu cuenta, conexiones y preferencias de GameLens.',
         save: 'Guardar Cambios',
-        // Tabs
-        tabs: {
-            account: 'Cuenta',
-            connections: 'Conexiones',
-            privacy: 'Privacidad',
-            notifications: 'Notificaciones'
-        },
-        // Account Section
+        tabs: { account: 'Cuenta', connections: 'Conexiones', privacy: 'Privacidad', notifications: 'Notificaciones' },
         accountInfo: 'Información de la Cuenta',
         displayName: 'Nombre Visible',
         displayNameDesc: 'Este es el nombre que verán tus amigos.',
@@ -174,9 +244,7 @@ export default function SettingsPage() {
         usernameDesc: 'Identificador único. Se usa para menciones y URLs.',
         email: 'Correo Electrónico',
         langLabel: 'Idioma',
-        // Security Section
         security: 'Seguridad',
-        // CORRECCIÓN AQUÍ: Renombrado de 2fa a twoFA
         twoFA: 'Autenticación de dos pasos (2FA)',
         twoFADesc: 'Añade una capa extra de seguridad.',
         password: 'Contraseña',
@@ -186,14 +254,12 @@ export default function SettingsPage() {
         dangerDesc: 'Estas acciones son irreversibles. Ten cuidado.',
         deleteAccount: 'Eliminar Cuenta',
         logoutAll: 'Cerrar Sesión en todos lados',
-        // Connections Section
         connectedPlat: 'Plataformas Conectadas',
         connectedDesc: 'Sincroniza tus juegos, logros y actividad conectando tus cuentas.',
         connectedAs: 'Conectado como',
         notConnected: 'No conectado',
         disconnect: 'Desconectar',
         connect: 'Conectar',
-        // Privacy Section
         privacyVis: 'Privacidad y Visibilidad',
         publicProfile: 'Perfil Público',
         publicDesc: 'Cualquier persona puede ver tu perfil y estadísticas.',
@@ -201,7 +267,6 @@ export default function SettingsPage() {
         showActivityDesc: 'Muestra qué estás jugando en tiempo real.',
         friendReq: 'Permitir Solicitudes de Amistad',
         friendReqDesc: 'Los usuarios pueden enviarte invitaciones.',
-        // Notifications Section
         notifPref: 'Preferencias de Notificaciones',
         emails: 'Correos Electrónicos',
         emailsDesc: 'Resumen semanal, seguridad y soporte.',
@@ -212,64 +277,7 @@ export default function SettingsPage() {
     }
   };
 
-  const t = translations[language.toLowerCase() as 'en' | 'es'];
-
-  // --- ESTADOS DE CONEXIONES ---
-  const [connections, setConnections] = useState<Connection[]>([
-    { 
-      id: 'steam', 
-      name: 'Steam', 
-      connected: true, 
-      user: 'Valen_Dev', 
-      color: '#171a21', 
-      image: '/Steam.svg' 
-    },
-    { 
-      id: 'epic', 
-      name: 'Epic Games', 
-      connected: true, 
-      user: 'Valen_Dev', 
-      color: '#2a2a2a', 
-      image: '/Epic.svg' 
-    },
-    { 
-      id: 'discord', 
-      name: 'Discord', 
-      connected: true, 
-      user: 'Valentin#0001', 
-      color: '#5865F2',
-      icon: DiscordIcon 
-    },
-    { 
-      id: 'psn', 
-      name: 'PlayStation', 
-      connected: false, 
-      user: '', 
-      color: '#003791',
-      image: '/Play.svg' 
-    },
-    { 
-      id: 'xbox', 
-      name: 'Xbox Live', 
-      connected: false, 
-      user: '', 
-      color: '#107C10', 
-      image: '/Xbox.svg' 
-    },
-  ]);
-
-  useEffect(() => {
-    const mockUser = { name: 'Valentín', favoritePlatform: 'PC', avatarUrl: '' };
-    const timer = setTimeout(() => {
-        setUser(mockUser);
-        setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleToggleConnection = (id: string) => {
-    setConnections(prev => prev.map(c => c.id === id ? { ...c, connected: !c.connected } : c));
-  };
+  const t = translations[language.toLowerCase() as 'en' | 'es'] || translations.en;
 
   if (loading) {
     return <div className="h-screen flex items-center justify-center text-white bg-[#131119]">{t.loading}</div>;
@@ -341,18 +349,8 @@ export default function SettingsPage() {
                     onChange={(e) => setFormData({...formData, language: e.target.value})}
                     className="w-full bg-[#131119] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 hover:border-white/30 transition-all appearance-none cursor-pointer"
                   >
-                    <option value="es-la">Español (Latinoamérica)</option>
-                    <option value="es-es">Español (España)</option>
-                    <option value="en-us">English (US)</option>
-                    <option value="en-uk">English (UK)</option>
-                    <option value="pt-br">Português (Brasil)</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                    <option value="it">Italiano</option>
-                    <option value="ja">日本語 (Japonés)</option>
-                    <option value="ko">한국어 (Coreano)</option>
-                    <option value="zh">中文 (Chino)</option>
-                    <option value="ru">Русский (Ruso)</option>
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
                   </select>
                 </div>
 
@@ -365,14 +363,12 @@ export default function SettingsPage() {
                 <Shield size={20} className="text-green-500" /> {t.security}
               </h3>
               <div className="space-y-6">
-                {/* 2FA: Stack en móvil para evitar desborde */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-[#131119] border border-white/5 hover:border-green-500/30 hover:bg-[#1f1f25] transition-all duration-300 gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="p-2 rounded-lg bg-green-500/10 text-green-500 shrink-0">
                       <Lock size={20} />
                     </div>
                     <div>
-                      {/* CORRECCIÓN: Uso de t.twoFA en lugar de t.2fa */}
                       <p className="font-bold text-white">{t.twoFA}</p>
                       <p className="text-sm text-gray-500">{t.twoFADesc}</p>
                     </div>
@@ -425,7 +421,6 @@ export default function SettingsPage() {
 
                <div className="grid grid-cols-1 gap-4">
                   {connections.map((conn) => (
-                    // Responsive: Flex-col en móvil para que el botón pase abajo
                     <div 
                       key={conn.id}
                       className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border transition-all duration-300 gap-4 ${
@@ -435,20 +430,12 @@ export default function SettingsPage() {
                       }`}
                     >
                         <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
-                            {/* CONTENEDOR DEL ICONO */}
                             <div 
                               className={`w-14 h-14 rounded-xl flex items-center justify-center relative overflow-hidden shrink-0 transition-colors ${conn.connected ? 'text-white' : 'text-gray-500'}`} 
                               style={{ backgroundColor: conn.connected ? conn.color : '#ffffff10' }}
                             >
                                 {conn.image ? (
-                                  <Image 
-                                    src={conn.image} 
-                                    alt={conn.name} 
-                                    width={28} 
-                                    height={28} 
-                                    className="object-contain"
-                                    unoptimized
-                                  />
+                                  <Image src={conn.image} alt={conn.name} width={28} height={28} className="object-contain" unoptimized />
                                 ) : (
                                   conn.icon && <conn.icon />
                                 )}
@@ -567,59 +554,43 @@ export default function SettingsPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col bg-[#131119]"
-      style={{ colorScheme: 'dark' }}
-    >
-        {/* --- ESTILOS GLOBALES --- */}
+    <div className="min-h-screen flex flex-col bg-[#131119]" style={{ colorScheme: 'dark' }}>
         <style jsx global>{`
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(5px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .animate-fadeIn {
-                animation: fadeIn 0.4s ease-out forwards;
-            }
-            .no-scrollbar::-webkit-scrollbar {
-                display: none;
-            }
-            .no-scrollbar {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-            }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+            .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+            .no-scrollbar::-webkit-scrollbar { display: none; }
+            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
 
-      {/* 1. HEADER INTEGRADO */}
       <Header user={safeUser} />
       
-      {/* 2. MAIN WRAPPER */}
       <main className="flex-1 px-6 md:px-10 max-w-[1920px] mx-auto w-full relative flex flex-col">
-        
         <div className="flex flex-col md:flex-row gap-8 flex-1 items-stretch">
           
-          {/* Menú Lateral */}
           <aside className="hidden md:block w-[260px] shrink-0 relative">
              <div className="sticky top-[74px] pt-10 pb-10 h-[calc(100vh-74px)] overflow-y-auto no-scrollbar">
                 <VerticalMenu activeItem="settings" />
              </div>
           </aside>
 
-          {/* Área Derecha: Contenido de Settings */}
           <div className="flex-1 w-full min-w-0 space-y-8 flex flex-col pt-6 md:pt-10 pb-10">
             
-            {/* Header de la Página - CENTRADO EN MÓVIL */}
+            {/* Header de la Página */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-4 text-center md:text-left">
                 <div>
                     <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">{t.title}</h2>
                     <p className="text-gray-400 text-sm">{t.subtitle}</p>
                 </div>
-                <button className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all duration-300 shadow-lg shadow-white/5 hover:scale-105 active:scale-95">
+                <button 
+                    onClick={handleSave} 
+                    className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all duration-300 shadow-lg shadow-white/5 hover:scale-105 active:scale-95"
+                >
                     <Save size={18} />
                     {t.save}
                 </button>
             </div>
 
-            {/* Navegación por Pestañas */}
+            {/* Tabs */}
             <div className="flex overflow-x-auto no-scrollbar border-b border-white/10 gap-8">
                 {[
                     { id: 'account', label: t.tabs.account, icon: User },
@@ -631,25 +602,16 @@ export default function SettingsPage() {
                     let activeColor = 'text-blue-500';
                     let activeBorder = 'border-blue-500';
 
-                    if (tab.id === 'connections') {
-                        activeColor = 'text-green-500';
-                        activeBorder = 'border-green-500';
-                    } else if (tab.id === 'privacy') {
-                        activeColor = 'text-purple-500';
-                        activeBorder = 'border-purple-500';
-                    } else if (tab.id === 'notifications') {
-                        activeColor = 'text-yellow-500';
-                        activeBorder = 'border-yellow-500';
-                    }
+                    if (tab.id === 'connections') { activeColor = 'text-green-500'; activeBorder = 'border-green-500'; } 
+                    else if (tab.id === 'privacy') { activeColor = 'text-purple-500'; activeBorder = 'border-purple-500'; } 
+                    else if (tab.id === 'notifications') { activeColor = 'text-yellow-500'; activeBorder = 'border-yellow-500'; }
 
                     return (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as typeof activeTab)}
                             className={`flex items-center gap-2 pb-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
-                                isActive 
-                                ? `text-white ${activeBorder}` 
-                                : 'text-gray-500 border-transparent hover:text-gray-300'
+                                isActive ? `text-white ${activeBorder}` : 'text-gray-500 border-transparent hover:text-gray-300'
                             }`}
                         >
                             <tab.icon size={18} className={isActive ? activeColor : ''} />
